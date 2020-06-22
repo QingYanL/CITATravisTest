@@ -61,7 +61,7 @@ if ! docker ps | grep "${CONTAINER_NAME}" > '/dev/null' 2>&1; then
     docker rm "${CONTAINER_NAME}" > '/dev/null' 2>&1
 
     # test network and set init cmd
-    timeout=3
+    timeout=30
     target=www.google.com
     ret_code=$(curl -I -s --connect-timeout $timeout $target -w "%{http_code}" | tail -n1)
     if [ "x$ret_code" = "x200" ]; then
