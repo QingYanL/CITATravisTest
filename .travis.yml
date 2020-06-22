@@ -1,7 +1,7 @@
 language: generic
 sudo: required
 cache:
-  timeout: 600
+  timeout: 1024
   directories:
     - $TRAVIS_BUILD_DIR/target/debug
     - /opt/.cargo/git
