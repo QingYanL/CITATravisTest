@@ -1,7 +1,7 @@
 language: generic
 sudo: required
 cache:
-  timeout: 600
+  timeout: 1024
   directories:
     - $TRAVIS_BUILD_DIR/target/debug
     - /opt/.cargo/git
@@ -20,6 +20,7 @@ jobs:
   include:
 
     - stage: CheckShell
+      if: tag IS NOT present
       script:
         # Fail if any of these files have warnings
         - shellcheck scripts/*.sh env.sh
@@ -35,18 +36,26 @@ jobs:
           - $TRAVIS_BUILD_DIR/target/release-cache
       env: HASH_ALGO=sha3hash    CRYPTO_ALGO=secp256k1
       before_script:
+        - echo "ls before_script " "$(ls)"
+        - echo "pwd dangqian " "$(pwd)"
         - cd $TRAVIS_BUILD_DIR
+        - echo "pwd hou " "$(pwd)"
+        - echo "ls hou " "$(ls)"
         - ./scripts/replace_default_feature.sh ./ sha3hash  ${HASH_ALGO}
         - ./scripts/replace_default_feature.sh ./ secp256k1 ${CRYPTO_ALGO}
       script: ./env.sh make release
       before_cache:
         - cd $TRAVIS_BUILD_DIR
+        - echo "ls old " "$(ls)"
+        - cp -r  target/install docker/release/cita_secp256k1_sha3
+        - echo "ls docker release is " "$(ls)"
         - rm -rf target/release-cache
         - mv -vf target/install target/release-cache
 
     - &stage-contract-test-sha3-secp256k1
       stage: IntegrateTest
       name: Unit Group
+      if: tag IS NOT present
       language: node_js
       node_js:
         # - lts/*
@@ -73,49 +82,64 @@ jobs:
       script: npm run-script unit_group
     - <<: *stage-contract-test-sha3-secp256k1
       name: Unit Permission
+      if: tag IS NOT present
       script: npm run-script unit_permission
     - <<: *stage-contract-test-sha3-secp256k1
       name: Unit Auth
+      if: tag IS NOT present
       script: npm run-script unit_auth
     - <<: *stage-contract-test-sha3-secp256k1
       name: Unit Chain
+      if: tag IS NOT present
       script: npm run-script unit_chain
     - <<: *stage-contract-test-sha3-secp256k1
       name: Unit Group Management
+      if: tag IS NOT present
       script: npm run-script unit_gm
     - <<: *stage-contract-test-sha3-secp256k1
       name: Unit Permission Management
+      if: tag IS NOT present
       script: npm run-script unit_pm
     - <<: *stage-contract-test-sha3-secp256k1
       name: Unit Role Management
+      if: tag IS NOT present
       script: npm run-script unit_rm
     - <<: *stage-contract-test-sha3-secp256k1
       name: Unit Quota Management
+      if: tag IS NOT present
       script: npm run-script unit_qm
     - <<: *stage-contract-test-sha3-secp256k1
       name: Unit Quota
+      if: tag IS NOT present
       script: npm run-script unit_quota
     - <<: *stage-contract-test-sha3-secp256k1
       name: Unit Abi
+      if: tag IS NOT present
       script: npm run-script abi
     - <<: *stage-contract-test-sha3-secp256k1
       name: Unit Admin
+      if: tag IS NOT present
       script: npm run-script unit_admin
     - <<: *stage-contract-test-sha3-secp256k1
       name: Unit Store
+      if: tag IS NOT present
       script: npm run-script store
     - <<: *stage-contract-test-sha3-secp256k1
       name: Unit Batch Tx
+      if: tag IS NOT present
       script: npm run-script batch_tx
     - <<: *stage-contract-test-sha3-secp256k1
       name: Unit Uint8
+      if: tag IS NOT present
       script: npm run-script uint8
     - <<: *stage-contract-test-sha3-secp256k1
       name: Unit VersionManager
+      if: tag IS NOT present
       script: npm run-script unit_vm
 
     - <<: *stage-contract-test-sha3-secp256k1
       name: Unit Node
+      if: tag IS NOT present
       install:
         - cd $TRAVIS_BUILD_DIR/target/install
         - ./bin/cita create
@@ -130,6 +154,7 @@ jobs:
 
     - <<: *stage-contract-test-sha3-secp256k1
       name: Integrate Quota
+      if: tag IS NOT present
       install:
         - cd $TRAVIS_BUILD_DIR/target/install
         - ./bin/cita create
@@ -143,6 +168,7 @@ jobs:
 
     - <<: *stage-contract-test-sha3-secp256k1
       name: Integrate Permission
+      if: tag IS NOT present
       install:
         - cd $TRAVIS_BUILD_DIR/target/install
         - ./bin/cita create
@@ -156,6 +182,7 @@ jobs:
 
     - <<: *stage-contract-test-sha3-secp256k1
       name: Integrate AutoExec
+      if: tag IS NOT present
       install:
         - cd $TRAVIS_BUILD_DIR/target/install
         - ./bin/cita create
@@ -169,6 +196,7 @@ jobs:
 
     - <<: *stage-contract-test-sha3-secp256k1
       name: Integrate Lifetime
+      if: tag IS NOT present
       install:
         - cd $TRAVIS_BUILD_DIR/target/install
         - ./bin/cita create
@@ -180,3 +208,14 @@ jobs:
         - ./bin/cita start test-chain/0
       script:
         - npm run-script lifetime
+before_deploy:
+- ./scripts/release_cita_secp256k1_sha3.sh
+deploy:
+  provider: releases
+  api_key:
+    secure: JJiuOgi6i+SIlbyVS+LJg3XmQ3tLJ+hn5g5r7vaPoXrU3e42IHabHsgpdsuiOupUInxRmBasQVgRCpsWZ2qenev84so7BRp94QlS5IHJqV3fzutGQjztJ55dym2C5S4QzXCvfyMS+eC5HkRjm2orZXAYWPhWMGO835vPh2p+efu30onPQkqZXw0eZKVleFTd5eQbTgSdONsXX92rytNktbIXPdMfsm5bblkYk0tXi5SB2Hl9qsV3paF1sUa0VOeKZ5HA+vejz4YVHyNYDg6qSMClwoixEBEiMixQ01FcIVLsDHZ25maL3VKxkRfuk2BxPdQrQZYuAAHuOss6slxQS+xovwQbi3Zu8TsCFvS5wgtSGZeGMB0BrMxvvjsKtMYkDgobUcayxR69wfaZThWcTFAiIdiAg9Z/csd9x9MOFVGpKG0Aw0PjlmvdF1FkcASxh0JaqEZV8c+CGpyQbD8rbzLg1fdnHQFLUwiHn2jT0ehGqMA+B0mIbEE9iyKgjMepzTTjP+j+URU8mpoZdwP02tbelH3n+H3s6WKnR+W0ibroxvWHuQ5YAEOci+EsfV72XYCZEUJLr6eClOc6PoW3B1lp1mkFPSbXrImSlWfI3NWElnKZoV6l3KARirxrKZVtg5/vd8mxecmuRJ0x7G9Eze76OC7SOZLyWJCKfdFr+s8=
+  file: "./docker/release/cita_secp256k1_sha3.tar.gz"
+  on:
+    tags: true
+  skip_cleanup: 'true'
+
